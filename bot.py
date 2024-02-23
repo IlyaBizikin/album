@@ -17,15 +17,18 @@ user_images = {}
 
 A4_SIZE = (2480, 3508)
 
+
 class PDF(FPDF):
     def __init__(self, orientation='P', unit='mm', format='A4'):
         super().__init__(orientation, unit, format)
+
 
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add(KeyboardButton("Создать альбом"))
     await message.reply("Привет! Отправь мне фото, и я создам из них фотоальбом.", reply_markup=markup)
+
 
 @dp.message_handler(content_types=['photo'])
 async def handle_docs_photo(message: types.Message):
@@ -40,6 +43,7 @@ async def handle_docs_photo(message: types.Message):
     user_images[user_id].append(photo_bytes)
 
     await message.reply("Фото добавлено!")
+
 
 @dp.message_handler(lambda message: message.text == "Создать альбом")
 async def create_album(message: types.Message):
@@ -59,9 +63,12 @@ async def create_album(message: types.Message):
 
         fd, tmpfilepath = mkstemp(suffix=".jpg")
         os.close(fd)
+
         try:
             img.save(tmpfilepath, format="JPEG")
             pdf.image(tmpfilepath, x=0, y=0, w=210, h=297)
+        except FileNotFoundError:
+            print('Ошибка! Файл не существует')
         finally:
             os.remove(tmpfilepath)
 
@@ -73,6 +80,6 @@ async def create_album(message: types.Message):
 
     del user_images[user_id]
 
+
 if __name__ == '__main__':
     executor.start_polling(dp)
-
